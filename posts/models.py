@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 class User(models.Model):
     username = models.CharField(max_length=100, unique=True)
@@ -9,9 +10,14 @@ class User(models.Model):
         return self.username
 
 class Post(models.Model):
+    POST_TYPES = (('image', 'Image'), ('video', 'Video'), ('text', 'Text'))
+    title = models.CharField(max_length=255, default="Untitled Post")
     content = models.TextField()
     author = models.ForeignKey(User, related_name='posts', on_delete=models.CASCADE)
+    post_type = models.CharField(max_length=10, choices=POST_TYPES, default='text')
+    metadata = models.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
 
     def __str__(self):
         return f"Post by {self.author.username} at {self.created_at}"

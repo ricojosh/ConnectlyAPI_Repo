@@ -7,7 +7,14 @@ from .serializers import UserSerializer, PostSerializer, CommentSerializer
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from .permissions import IsPostAuthor
-from django.contrib.auth import authenticate 
+from django.contrib.auth import authenticate
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from factories.post_factory import PostFactory
+from singletons.logger_singleton import LoggerSingleton
+
+logger = LoggerSingleton().get_logger()
 
 # --- User Management with Hashing ---
 class UserListCreate(APIView):
@@ -80,6 +87,27 @@ class PostDetailView(APIView):
             return Response({"content": post.content})
         except Post.DoesNotExist:
             return Response({"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+#New class for initializing postfactory from factories folder
+class CreatePostView(APIView):
+    def post(self, request):
+        data = request.data
+        try:
+            post = PostFactory.create_post(
+                post_type=data.get('post_type'),
+                title=data.get('title'),
+                author_id=data.get('author'), 
+                content=data.get('content', ''),
+                metadata=data.get('metadata', {})
+            )
+            logger.info(f"API: Post {post.id} created via Factory.")
+            return Response({'message': 'Post created successfully!'}, status=status.HTTP_201_CREATED)
+        except ValueError as e:
+            logger.error(f"API ERROR: {str(e)}")
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 
 
